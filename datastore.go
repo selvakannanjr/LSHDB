@@ -8,7 +8,9 @@ import (
 	"math"
 	"os"
 	"runtime"
+	"sort"
 	"strconv"
+	"time"
 )
 
 type Payload struct {
@@ -88,16 +90,22 @@ func FindCosineSimilarity(recs []ImageRec, vector []float64, ch chan ResType) {
 	}
 }
 
-func (L *LSHMap) Query(bucketid string, vector []float64)[]string{
-	var result []string
+func (L *LSHMap) Query(bucketid string, vector []float64, top int)[]string{
+	var result []ResType
 
 	b2bsearched := L.GetClosestBucket(bucketid)
 
-	ch := make(chan ResType,4)
+	ch := make(chan ResType)
 	maxprocs := runtime.GOMAXPROCS(0)
 	if len((*L)[b2bsearched]) < maxprocs {
 		maxprocs = len((*L)[b2bsearched])
 	}
+
+	if top > len((*L)[b2bsearched]) {
+		top = len((*L)[b2bsearched])
+	}
+
+
 	for i:=0;i<len((*L)[b2bsearched]);i+=maxprocs{
 		end := i+maxprocs
 		if end > len((*L)[b2bsearched]){
@@ -106,9 +114,35 @@ func (L *LSHMap) Query(bucketid string, vector []float64)[]string{
 		go FindCosineSimilarity((*L)[b2bsearched][i:end],vector,ch)
 	}
 
+	//read from channel and append to result
+		for {
+			select {
+			case res := <-ch:
+				result = append(result, res)
+			default:
+				//wait for 1 second
+				time.Sleep(25 * time.Millisecond)
+				//close channel if no more data is coming
+				if len(result) == len((*L)[b2bsearched]) {
+					close(ch)
+					goto end
+				}
+			}
+		}
+	end:
 
+	// sort result by score in descending order
+	// return top 10 imageids
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Score > result[j].Score
+	})
 
-	return result
+	// return top 10 imageids
+	var topresults []string
+	for i := 0; i < top; i++ {
+		topresults = append(topresults, result[i].ImageID)
+	}
+	return topresults
 }
 
 // compute and return the dot product of two float64 vectors
