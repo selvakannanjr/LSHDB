@@ -3,10 +3,12 @@ package main
 import (
 	"bufio"
 	csv "encoding/csv"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"math"
+	"net/http"
 	"os"
 	"runtime"
 	"sort"
@@ -145,6 +147,38 @@ func (L *LSHMap) Query(bucketid string, vector []float64, top int)[]string{
 		topresults = append(topresults, result[i].ImageID)
 	}
 	return topresults
+}
+
+// a struct method to act as a http handler that takes the query vector from the request body and returns the top 3 results
+func (L *LSHMap) HandleRequest(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		return
+	}
+
+	var payload Payload
+	err = json.Unmarshal(body, &payload)
+	if err != nil {
+		http.Error(w, "Error unmarshalling JSON", http.StatusBadRequest)
+		return
+	}
+
+	fmt.Println("Received: ", payload.Vector)
+
+	// query the map
+	topresults := L.Query(ComputeBucketID(payload.Vector, randmatrix), payload.Vector, 3)
+	//write the response
+	w.Header().Set("Content-Type", "application/json")
+	//encode the topresults into json using anonymous struct
+	json.NewEncoder(w).Encode(struct {
+		Results []string `json:"results"`
+	}{topresults})
 }
 
 // compute and return the dot product of two float64 vectors
