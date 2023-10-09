@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	csv "encoding/csv"
+	"fmt"
 	"io"
 	"log"
 	"math"
@@ -111,6 +112,7 @@ func (L *LSHMap) Query(bucketid string, vector []float64, top int)[]string{
 		if end > len((*L)[b2bsearched]){
 			end = len((*L)[b2bsearched])
 		}
+		fmt.Println("goroutine spawned")
 		go FindCosineSimilarity((*L)[b2bsearched][i:end],vector,ch)
 	}
 
