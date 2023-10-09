@@ -69,6 +69,7 @@ func (L *LSHMap) LoadMap(filename string, matrix [][]float64) {
 		ir := ImageRec{line[0], vector}
 		L.InsertImageRec(ir, matrix)
 	}
+	fmt.Println("Map loaded")
 }
 
 // a struct method to return all the keys in the map
@@ -107,7 +108,7 @@ func (L *LSHMap) Query(bucketid string, vector []float64, top int)[]string{
 	if top > len((*L)[b2bsearched]) {
 		top = len((*L)[b2bsearched])
 	}
-
+	fmt.Println(len((*L)[b2bsearched]))
 
 	for i:=0;i<len((*L)[b2bsearched]);i+=maxprocs{
 		end := i+maxprocs
