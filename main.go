@@ -20,7 +20,7 @@ func main() {
 	// http handler for /query
 	//take the query vector from the request body
 	// returns the top 3 results
-	http.HandleFunc("/query", L.HandleRequest)
+	http.HandleFunc("/query", RateLimiter(L.HandleRequest,50))
 	http.ListenAndServe(":8080", nil)
 	fmt.Println("Server started at port 8080")
 }

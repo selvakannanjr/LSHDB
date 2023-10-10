@@ -29,3 +29,13 @@ func HandleRequest(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Received: %v\n", payload.Vector)
 	fmt.Println("Received: ", payload.Vector)
 }
+
+func RateLimiter(f http.HandlerFunc, maxClients int) http.HandlerFunc {
+	sema := make(chan struct{}, maxClients)
+
+	return func(w http.ResponseWriter, req *http.Request) {
+		sema <- struct{}{}
+		defer func() { <-sema }()
+		f(w, req)
+	}
+}
