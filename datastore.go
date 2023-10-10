@@ -170,9 +170,10 @@ func (L *LSHMap) HandleRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println("Received: ", payload.Vector)
+
 
 	// query the map
+	fmt.Println(ComputeBucketID(payload.Vector, randmatrix))
 	topresults := L.Query(ComputeBucketID(payload.Vector, randmatrix), payload.Vector, 3)
 	//write the response
 	w.Header().Set("Content-Type", "application/json")

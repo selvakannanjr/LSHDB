@@ -5,12 +5,12 @@ import "math/rand"
 //generate random float64 matrix with elements from standard normal distribution with given dimension
 // create the same matrix for a given seed
 func GenerateRandomMatrix(rows int, cols int, seed int64) [][]float64 {
-	rand.NewSource(seed)
+	r := rand.New(rand.NewSource(seed))
 	var matrix [][]float64
 	for i := 0; i < rows; i++ {
 		var row []float64
 		for j := 0; j < cols; j++ {
-			row = append(row, rand.NormFloat64())
+			row = append(row, r.NormFloat64())
 		}
 		matrix = append(matrix, row)
 	}
