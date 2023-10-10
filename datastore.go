@@ -87,13 +87,6 @@ func (L *LSHMap) GetClosestBucket(bucketid string) string {
 	return FindClosestBucket(bucketid, allbuckets)
 }
 
-func FindCosineSimilarity(recs []ImageRec, vector []float64, ch chan ResType) {
-	for _, rec := range recs {
-		score := rec.CosineSimilarity(vector)
-		ch <- ResType{rec.ImageID, score}
-	}
-}
-
 func (L *LSHMap) Query(bucketid string, vector []float64, top int)[]string{
 	var result []ResType
 
@@ -195,4 +188,11 @@ func dotProduct(vector1 []float64, vector2 []float64) float64 {
 // compute and return cosine similarity of two float64 vectors
 func cosineSimilarity(vector1 []float64, vector2 []float64) float64 {
 	return dotProduct(vector1, vector2) / (math.Sqrt(dotProduct(vector1, vector1)) * math.Sqrt(dotProduct(vector2, vector2)))
+}
+
+func FindCosineSimilarity(recs []ImageRec, vector []float64, ch chan ResType) {
+	for _, rec := range recs {
+		score := rec.CosineSimilarity(vector)
+		ch <- ResType{rec.ImageID, score}
+	}
 }
