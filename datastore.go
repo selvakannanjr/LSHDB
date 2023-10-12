@@ -3,12 +3,10 @@ package main
 import (
 	"bufio"
 	csv "encoding/csv"
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"math"
-	"net/http"
 	"os"
 	"runtime"
 	"sort"
@@ -87,7 +85,7 @@ func (L *LSHMap) GetClosestBucket(bucketid string) string {
 	return FindClosestBucket(bucketid, allbuckets)
 }
 
-func (L *LSHMap) Query(bucketid string, vector []float64, top int)[]string{
+func (L *LSHMap) Query(bucketid string, vector []float64, top int)[]ResType{
 	var result []ResType
 
 	b2bsearched := L.GetClosestBucket(bucketid)
@@ -136,45 +134,32 @@ func (L *LSHMap) Query(bucketid string, vector []float64, top int)[]string{
 	})
 
 	// return top 10 imageids
-	var topresults []string
+	var topresults []ResType
 	for i := 0; i < top; i++ {
-		topresults = append(topresults, result[i].ImageID)
+		topresults = append(topresults, result[i])
 	}
 	return topresults
 }
 
-// a struct method to act as a http handler that takes the query vector from the request body and returns the top 3 results
-func (L *LSHMap) HandleRequest(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-		return
+// a method that accepts any number of ResType slices and returns the top k results of all the slices
+func MergeResults(k int, slices ...[]ResType) []string {
+	var result []ResType
+	for _, slice := range slices {
+		result = append(result, slice...)
 	}
-
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, "Error reading request body", http.StatusInternalServerError)
-		return
+	// sort result by score in descending order
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Score > result[j].Score
+	})
+	// return top k results
+	var topresults []string
+	for i := 0; i < k; i++ {
+		topresults = append(topresults, result[i].ImageID)
 	}
-
-	var payload Payload
-	err = json.Unmarshal(body, &payload)
-	if err != nil {
-		http.Error(w, "Error unmarshalling JSON", http.StatusBadRequest)
-		return
-	}
-
-
-
-	// query the map
-	fmt.Println(ComputeBucketID(payload.Vector, randmatrix))
-	topresults := L.Query(ComputeBucketID(payload.Vector, randmatrix), payload.Vector, 3)
-	//write the response
-	w.Header().Set("Content-Type", "application/json")
-	//encode the topresults into json using anonymous struct
-	json.NewEncoder(w).Encode(struct {
-		Results []string `json:"results"`
-	}{topresults})
+	return topresults
 }
+// a struct method to act as a http handler that takes the query vector from the request body and returns the top 3 results
+
 
 // compute and return the dot product of two float64 vectors
 func dotProduct(vector1 []float64, vector2 []float64) float64 {
