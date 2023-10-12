@@ -11,9 +11,9 @@ var (
 )
 
 func init() {
-	randmatrix = GenerateRandomMatrix(16, 512, 69696)
+	randmatrix = GenerateRandomMatrix(8, 2048, 69696)
 	L = make(LSHMap)
-	L.LoadMap("db.csv", randmatrix)
+	L.LoadMap("db2.csv", randmatrix)
 }
 
 func main() {
