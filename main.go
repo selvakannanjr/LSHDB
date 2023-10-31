@@ -11,7 +11,8 @@ var (
 	L          [3]LSHMap
 )
 
-func init() {
+
+func main() {
 	for i := 0; i < 3; i++ {
 		randmatrix[i] = GenerateRandomMatrix(8, 2048,int64(seeds[i]) )
 		L[i] = make(LSHMap)
@@ -21,9 +22,6 @@ func init() {
 	for i := 0; i < 3; i++ {
 		L[i].LoadMap("db2.csv", randmatrix[i])
 	}
-}
-
-func main() {
 	// http handler for /query
 	//take the query vector from the request body
 	// returns the top 3 results
